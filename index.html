@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Анализ отзывов: Детские поильники</title>
+<style>
+  :root {
+    --green: #2e7d32; --green-bg: #e8f5e9; --green-light: #c8e6c9;
+    --red: #c62828; --red-bg: #ffebee; --red-light: #ffcdd2;
+    --orange: #e65100; --orange-bg: #fff3e0; --orange-light: #ffe0b2;
+    --blue: #1565c0; --blue-bg: #e3f2fd; --blue-light: #bbdefb;
+    --purple: #6a1b9a; --purple-bg: #f3e5f5;
+    --border: #e0e0e0; --star: #ff9800;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Tahoma, sans-serif; color: #212121; line-height: 1.65; max-width: 1240px; margin: 0 auto; padding: 24px 32px 60px; background: #fafbfc; }
+  .header { background: linear-gradient(135deg, #1a237e, #283593); color: #fff; padding: 32px 36px; border-radius: 12px; margin-bottom: 32px; }
+  .header h1 { font-size: 30px; margin-bottom: 4px; }
+  .header .sub { font-size: 15px; opacity: 0.85; }
+  .header .badges { display: flex; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
+  .header .badge { background: rgba(255,255,255,0.18); padding: 6px 14px; border-radius: 20px; font-size: 13px; }
+  .kpi-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 32px; }
+  .kpi { border-radius: 10px; padding: 20px 24px; text-align: center; }
+  .kpi .num { font-size: 36px; font-weight: 700; }
+  .kpi .label { font-size: 13px; margin-top: 4px; }
+  .kpi-green { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-light); }
+  .kpi-blue { background: var(--blue-bg); color: var(--blue); border: 1px solid var(--blue-light); }
+  .kpi-orange { background: var(--orange-bg); color: var(--orange); border: 1px solid var(--orange-light); }
+  .kpi-red { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-light); }
+  h2 { font-size: 21px; margin: 36px 0 16px; padding: 10px 16px; border-radius: 8px; display: flex; align-items: center; gap: 10px; }
+  h2 .icon { font-size: 22px; }
+  h3 { font-size: 17px; margin: 20px 0 10px; color: #37474f; }
+  h4 { font-size: 15px; margin: 14px 0 8px; }
+  .h2-blue { background: var(--blue-bg); color: var(--blue); border-left: 4px solid var(--blue); }
+  .h2-green { background: var(--green-bg); color: var(--green); border-left: 4px solid var(--green); }
+  .h2-red { background: var(--red-bg); color: var(--red); border-left: 4px solid var(--red); }
+  .h2-orange { background: var(--orange-bg); color: var(--orange); border-left: 4px solid var(--orange); }
+  .h2-purple { background: var(--purple-bg); color: var(--purple); border-left: 4px solid var(--purple); }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 24px; font-size: 14px; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  th, td { border: 1px solid var(--border); padding: 10px 12px; text-align: left; vertical-align: top; }
+  th { font-weight: 600; background: #f0f4f8; color: #37474f; }
+  tr:nth-child(even) td { background: #fafbfc; }
+  .bar-wrap { display: flex; align-items: center; gap: 6px; margin: 2px 0; }
+  .bar { height: 14px; display: inline-block; border-radius: 7px; }
+  .bar-5 { background: linear-gradient(90deg, #43a047, #66bb6a); }
+  .bar-4 { background: linear-gradient(90deg, #7cb342, #9ccc65); }
+  .bar-3 { background: linear-gradient(90deg, #ffa726, #ffb74d); }
+  .bar-2 { background: linear-gradient(90deg, #ef6c00, #ff9800); }
+  .bar-1 { background: linear-gradient(90deg, #e53935, #ef5350); }
+  .pct { font-size: 12px; min-width: 36px; color: #666; }
+  .stars { color: var(--star); letter-spacing: -1px; }
+  .tag { display: inline-block; font-size: 11px; padding: 2px 10px; border-radius: 12px; margin: 2px 2px; font-weight: 600; }
+  .tag-often { background: #e53935; color: #fff; }
+  .tag-medium { background: var(--orange); color: #fff; }
+  .tag-rare { background: #78909c; color: #fff; }
+  .products { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 32px; }
+  .product-link { display: flex; align-items: center; gap: 14px; padding: 16px 18px; border-radius: 10px; background: #fff; border: 1px solid var(--border); text-decoration: none; color: #212121; box-shadow: 0 1px 4px rgba(0,0,0,0.05); transition: box-shadow 0.2s, border-color 0.2s; }
+  .product-link:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12); border-color: #1565c0; }
+  .product-link .p-name { font-size: 14px; font-weight: 600; line-height: 1.3; }
+  .product-link .p-sub { font-size: 12px; color: #78909c; margin-top: 2px; }
+  .product-link .p-arrow { margin-left: auto; font-size: 18px; color: #1565c0; }
+  .card { border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin: 12px 0; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.04); transition: box-shadow 0.2s; }
+  .card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+  .card h4 { margin-top: 0; }
+  .card-winner { border: 2px solid var(--green); background: linear-gradient(135deg, #fff 90%, var(--green-bg)); }
+  .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .card-badge { font-size: 11px; padding: 3px 10px; border-radius: 12px; font-weight: 700; }
+  .badge-gold { background: #fff8e1; color: #f57f17; border: 1px solid #ffe082; }
+  .badge-silver { background: #eceff1; color: #546e7a; border: 1px solid #cfd8dc; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 900px) { .grid3 { grid-template-columns: 1fr; } .products { grid-template-columns: 1fr; } .kpi-row { grid-template-columns: 1fr; } }
+  ul { margin: 6px 0 6px 20px; }
+  li { margin-bottom: 5px; font-size: 13px; }
+  .summary-box { padding: 18px 22px; margin: 20px 0; border-radius: 8px; font-size: 14px; }
+  .summary-green { background: var(--green-bg); border-left: 4px solid var(--green); }
+  .summary-red { background: var(--red-bg); border-left: 4px solid var(--red); }
+  .summary-blue { background: var(--blue-bg); border-left: 4px solid var(--blue); }
+  .summary-orange { background: var(--orange-bg); border-left: 4px solid var(--orange); }
+  .score-circle { display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 50%; font-size: 18px; font-weight: 700; color: #fff; }
+  .score-high { background: var(--green); }
+  .score-mid { background: var(--orange); }
+  .score-low { background: var(--red); }
+  .sev-crit { color: var(--red); font-weight: 700; }
+  .sev-high { color: var(--orange); font-weight: 600; }
+  .sev-med { color: #f9a825; }
+  .sev-low { color: #78909c; }
+  .versus-table td:first-child { font-weight: 600; white-space: nowrap; }
+  .footer { margin-top: 50px; padding: 16px 0; border-top: 2px solid var(--border); font-size: 12px; color: #78909c; text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Анализ отзывов: Детские поильники</h1>
+  <div class="sub">Сравнительный анализ 3 моделей на основе 1 961 отзыва с Ozon</div>
+  <div class="badges">
+    <span class="badge">Ozon.ru</span>
+    <span class="badge">2026-04-10</span>
+    <span class="badge">1,961 отзывов</span>
+    <span class="badge">3 товаров</span>
+  </div>
+</div>
+
+<div class="products"><a class="product-link" href="https://www.ozon.ru/product/detskiy-poilnik-neprolivayka-s-myagkoy-silikonovoy-trubochkoy-i-udobnymi-ruchkami-dlya-detey-ot-5-1858038332/" target="_blank">
+    <div>
+      <div class="p-name">КАРТОФАН 250 мл</div>
+      <div class="p-sub">250 мл · 983 отзыва · Ozon</div>
+    </div>
+    <span class="p-arrow">&#8594;</span>
+  </a>
+<a class="product-link" href="https://www.ozon.ru/product/poilnik-detskiy-neprolivayka-s-trubochkoy-2889894385/" target="_blank">
+    <div>
+      <div class="p-name">Minitutu 240 мл</div>
+      <div class="p-sub">240 мл · 196 отзывов · Ozon</div>
+    </div>
+    <span class="p-arrow">&#8594;</span>
+  </a>
+<a class="product-link" href="https://www.ozon.ru/product/poilnik-s-trubochkoy-detskiy-1807618604/" target="_blank">
+    <div>
+      <div class="p-name">Paomma 300 мл</div>
+      <div class="p-sub">300 мл · 782 отзыва · Ozon</div>
+    </div>
+    <span class="p-arrow">&#8594;</span>
+  </a></div>
+
+<div class="kpi-row"><div class="kpi kpi-green">
+    <div class="num">97%</div>
+    <div class="label">Minitutu 240 мл — позитив</div>
+  </div>
+<div class="kpi kpi-blue">
+    <div class="num">81%</div>
+    <div class="label">Paomma 300 мл — позитив</div>
+  </div>
+<div class="kpi kpi-orange">
+    <div class="num">77%</div>
+    <div class="label">КАРТОФАН 250 мл — позитив</div>
+  </div>
+</div>
+
+<h2 class="h2-blue"><span class="icon">&#128202;</span> 1. Общая оценка</h2>
+<table>
+  <thead><tr>
+    <th>Товар</th><th>Отзывов</th>
+    <th><span class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span></th>
+    <th><span class="stars">&#9733;&#9733;&#9733;&#9733;</span></th>
+    <th><span class="stars">&#9733;&#9733;&#9733;</span></th>
+    <th><span class="stars">&#9733;&#9733;</span></th>
+    <th><span class="stars">&#9733;</span></th>
+    <th>Распределение</th><th>Позитив</th>
+  </tr></thead>
+  <tbody><tr>
+      <td><strong>Minitutu 240 мл</strong></td>
+      <td>196</td>
+      <td>178</td>
+      <td>12</td>
+      <td>2</td>
+      <td>0</td>
+      <td>4</td>
+      <td><div class="bar-wrap"><div class="bar bar-5" style="width:182px"></div><span class="pct">91%</span></div>
+<div class="bar-wrap"><div class="bar bar-4" style="width:12px"></div><span class="pct">6%</span></div>
+<div class="bar-wrap"><div class="bar bar-3" style="width:2px"></div><span class="pct">1%</span></div>
+<div class="bar-wrap"><div class="bar bar-2" style="width:2px"></div><span class="pct">0%</span></div>
+<div class="bar-wrap"><div class="bar bar-1" style="width:4px"></div><span class="pct">2%</span></div>
+</td>
+      <td><span class="score-circle score-high">97%</span></td>
+    </tr>
+<tr>
+      <td><strong>Paomma 300 мл</strong></td>
+      <td>782</td>
+      <td>566</td>
+      <td>65</td>
+      <td>59</td>
+      <td>35</td>
+      <td>56</td>
+      <td><div class="bar-wrap"><div class="bar bar-5" style="width:144px"></div><span class="pct">72%</span></div>
+<div class="bar-wrap"><div class="bar bar-4" style="width:16px"></div><span class="pct">8%</span></div>
+<div class="bar-wrap"><div class="bar bar-3" style="width:16px"></div><span class="pct">8%</span></div>
+<div class="bar-wrap"><div class="bar bar-2" style="width:8px"></div><span class="pct">4%</span></div>
+<div class="bar-wrap"><div class="bar bar-1" style="width:14px"></div><span class="pct">7%</span></div>
+</td>
+      <td><span class="score-circle score-mid">81%</span></td>
+    </tr>
+<tr>
+      <td><strong>КАРТОФАН 250 мл</strong></td>
+      <td>983</td>
+      <td>640</td>
+      <td>121</td>
+      <td>93</td>
+      <td>47</td>
+      <td>78</td>
+      <td><div class="bar-wrap"><div class="bar bar-5" style="width:130px"></div><span class="pct">65%</span></div>
+<div class="bar-wrap"><div class="bar bar-4" style="width:24px"></div><span class="pct">12%</span></div>
+<div class="bar-wrap"><div class="bar bar-3" style="width:18px"></div><span class="pct">9%</span></div>
+<div class="bar-wrap"><div class="bar bar-2" style="width:10px"></div><span class="pct">5%</span></div>
+<div class="bar-wrap"><div class="bar bar-1" style="width:16px"></div><span class="pct">8%</span></div>
+</td>
+      <td><span class="score-circle score-mid">77%</span></td>
+    </tr>
+</tbody>
+</table>
+
+<h2 class="h2-green"><span class="icon">&#9989;</span> 2. Сравнение: плюсы</h2>
+<table class="versus-table">
+  <thead><tr><th>Критерий</th><th>КАРТОФАН 250 мл</th><th>Minitutu 240 мл</th><th>Paomma 300 мл</th></tr></thead>
+  <tbody><tr><td>Непроливайка</td><td>Действительно не проливается</td><td>Герметизация хорошая</td><td>Не проливается при переворачивании</td></tr>
+<tr><td>Лёгкость питья</td><td>Ребёнок быстро понимает</td><td>Помогает приучить к трубочке</td><td>С первой попытки поняла как пить</td></tr>
+<tr><td>Грузик/утяжелитель</td><td>Питьё под любым углом</td><td>Сменные трубочки с утяжелителем</td><td>Грузик на дне — допить всё</td></tr>
+<tr><td>Прочность</td><td>Выдерживает падения со стульчика</td><td>Ни трещин, ни царапин</td><td>Падала много раз — целая</td></tr>
+<tr><td>Удобные ручки</td><td>Удобно для детских ручек</td><td>Хороший держатель</td><td>Легко держать самостоятельно</td></tr>
+</tbody>
+</table>
+
+<h2 class="h2-red"><span class="icon">&#10060;</span> 3. Сравнение: минусы</h2>
+<table class="versus-table">
+  <thead><tr><th>Проблема</th><th>КАРТОФАН 250 мл</th><th>Minitutu 240 мл</th><th>Paomma 300 мл</th></tr></thead>
+  <tbody><tr><td>Протечки</td><td>Течёт через резьбу</td><td>Течёт с клапанов</td><td>Протекает непонятно откуда</td></tr>
+<tr><td>Запах</td><td>Запах пластика/силикона</td><td>Воняет резиной</td><td>Запах химии не уходит</td></tr>
+<tr><td>Ручки</td><td>Крутятся вокруг оси</td><td>Прокручиваются</td><td>Не фиксируются</td></tr>
+<tr><td>Сложность питья</td><td>Тугой клапан</td><td>Тяжело сосётся</td><td>Свободный поток без клапана</td></tr>
+<tr><td>Промывание</td><td>Плесень в трубочке</td><td>Налёт внутри</td><td>Щёточка не влезает</td></tr>
+</tbody>
+</table>
+
+<h2 class="h2-purple"><span class="icon">&#128269;</span> 4. Детальный анализ по товарам</h2>
+<div class="grid3"><div class="card card-winner">
+  <div class="card-header">
+    <div>
+      <h4>Minitutu 240 мл</h4>
+      <span style="font-size:13px; color:#666;">196 отзывов</span>
+    </div>
+    <span class="card-badge badge-gold">ЛИДЕР 97%</span>
+  </div>
+  <h4 style="color:var(--green);">&#9989; Плюсы</h4>
+  <ol style="font-size:13px;"><li><span class="tag tag-often">часто</span> Богатая комплектация — 3 насадки + ершики</li>
+<li><span class="tag tag-often">часто</span> Помогает приучить к бутылочке/трубочке</li>
+<li><span class="tag tag-often">часто</span> Удобство для детских рук</li>
+<li><span class="tag tag-often">часто</span> Универсальность — на разный возраст</li>
+<li><span class="tag tag-medium">средне</span> Питьё в любом положении (утяжелитель)</li>
+<li><span class="tag tag-medium">средне</span> Качество материалов — мягкий силикон</li>
+<li><span class="tag tag-medium">средне</span> Хорошее соотношение цена/качество</li>
+<li><span class="tag tag-medium">средне</span> Прочность — выдерживает падения</li>
+<li><span class="tag tag-rare">редко</span> Функция непроливайки</li>
+<li><span class="tag tag-rare">редко</span> Совместимость с бутылочками Pigeon</li>
+</ol>
+  <h4 style="color:var(--red); margin-top:14px;">&#10060; Минусы</h4>
+  <ol style="font-size:13px;"><li><span class="tag tag-medium">средне</span> Несоответствие цвета — тёмная/жёлтая колба вместо прозрачной</li>
+<li><span class="tag tag-medium">средне</span> Запах резины или пластика</li>
+<li><span class="tag tag-medium">средне</span> Несоответствие фото в карточке товара</li>
+<li><span class="tag tag-rare">редко</span> Протечки в некоторых экземплярах</li>
+<li><span class="tag tag-rare">редко</span> Разница в возрастной маркировке (6 мес. vs 9 мес.)</li>
+<li><span class="tag tag-rare">редко</span> Трудно сосать жидкость с клапанами</li>
+<li><span class="tag tag-rare">редко</span> Быстрый износ/прогрызание насадок</li>
+<li><span class="tag tag-rare">редко</span> Невозможно купить детали отдельно</li>
+</ol>
+</div><div class="card">
+  <div class="card-header">
+    <div>
+      <h4>Paomma 300 мл</h4>
+      <span style="font-size:13px; color:#666;">782 отзывов</span>
+    </div>
+    <span class="card-badge badge-silver">81%</span>
+  </div>
+  <h4 style="color:var(--green);">&#9989; Плюсы</h4>
+  <ol style="font-size:13px;"><li><span class="tag tag-often">часто</span> Ребёнок быстро понимает, как пить</li>
+<li><span class="tag tag-often">часто</span> Удобное открытие кнопкой</li>
+<li><span class="tag tag-often">часто</span> Грузик для питья в любом положении</li>
+<li><span class="tag tag-often">часто</span> Стильный дизайн и эстетичные цвета</li>
+<li><span class="tag tag-often">часто</span> Функция непроливайки</li>
+<li><span class="tag tag-often">часто</span> Удобство для детских рук</li>
+<li><span class="tag tag-medium">средне</span> Доступность сменных деталей</li>
+<li><span class="tag tag-medium">средне</span> Легко разбирать и мыть</li>
+<li><span class="tag tag-medium">средне</span> Мягкая тактильно приятная трубочка</li>
+<li><span class="tag tag-rare">редко</span> Хорошая упаковка (двойная коробка)</li>
+</ol>
+  <h4 style="color:var(--red); margin-top:14px;">&#10060; Минусы</h4>
+  <ol style="font-size:13px;"><li><span class="tag tag-often">часто</span> Хрупкая крышка и замок — ломаются при падении</li>
+<li><span class="tag tag-often">часто</span> Сильный запах пластика/резины</li>
+<li><span class="tag tag-medium">средне</span> Вращающиеся ручки не фиксируются</li>
+<li><span class="tag tag-medium">средне</span> Крышка мешает ребёнку при питье (упирается в лоб)</li>
+<li><span class="tag tag-medium">средне</span> Протечки в некоторых экземплярах</li>
+<li><span class="tag tag-rare">редко</span> Сложность промывания трубочки</li>
+<li><span class="tag tag-rare">редко</span> Расхождение цвета с фото в карточке</li>
+<li><span class="tag tag-rare">редко</span> Нельзя стерилизовать кипятком</li>
+<li><span class="tag tag-rare">редко</span> Мерная шкала быстро стирается</li>
+<li><span class="tag tag-rare">редко</span> Острые края при поломке крышки — опасность для ребёнка</li>
+</ol>
+</div><div class="card">
+  <div class="card-header">
+    <div>
+      <h4>КАРТОФАН 250 мл</h4>
+      <span style="font-size:13px; color:#666;">983 отзывов</span>
+    </div>
+    <span class="card-badge badge-silver">77%</span>
+  </div>
+  <h4 style="color:var(--green);">&#9989; Плюсы</h4>
+  <ol style="font-size:13px;"><li><span class="tag tag-often">часто</span> Функция непроливайки — действительно не проливается</li>
+<li><span class="tag tag-often">часто</span> Ударопрочность — выдерживает падения со стульчика</li>
+<li><span class="tag tag-often">часто</span> Ребёнок быстро понимает, как пить</li>
+<li><span class="tag tag-medium">средне</span> Грузик на трубочке — питьё под любым углом</li>
+<li><span class="tag tag-medium">средне</span> Удобно для детских ручек</li>
+<li><span class="tag tag-medium">средне</span> Качественный пластик и материалы</li>
+<li><span class="tag tag-medium">средне</span> Приятный дизайн и цвета</li>
+<li><span class="tag tag-rare">редко</span> Лёгкая сборка и разборка</li>
+<li><span class="tag tag-rare">редко</span> Отсутствие постороннего запаха (у ряда экземпляров)</li>
+<li><span class="tag tag-rare">редко</span> Привлекательная цена (~400 ₽)</li>
+</ol>
+  <h4 style="color:var(--red); margin-top:14px;">&#10060; Минусы</h4>
+  <ol style="font-size:13px;"><li><span class="tag tag-often">часто</span> Протекает через резьбу или трубочку</li>
+<li><span class="tag tag-often">часто</span> Тяжело сосать — слишком тугой клапан</li>
+<li><span class="tag tag-often">часто</span> Ручки вращаются, не фиксируются</li>
+<li><span class="tag tag-medium">средне</span> Верхняя крышка слетает при падении</li>
+<li><span class="tag tag-medium">средне</span> Сложно промыть трубочку (плесень)</li>
+<li><span class="tag tag-medium">средне</span> Стирается рисунок и мерная шкала</li>
+<li><span class="tag tag-medium">средне</span> Плохая упаковка — мятая/рваная коробка</li>
+<li><span class="tag tag-rare">редко</span> Неприятный запах пластика или силикона</li>
+<li><span class="tag tag-rare">редко</span> Кривая резьба — сложно закрутить ровно</li>
+<li><span class="tag tag-rare">редко</span> Деформация при кипячении (вздувается дно)</li>
+</ol>
+</div></div>
+
+<h2 class="h2-orange"><span class="icon">&#128293;</span> 5. Общие жалобы</h2>
+<table>
+  <thead><tr><th>#</th><th>Жалоба</th><th>Масштаб</th><th>Суть</th></tr></thead>
+  <tbody><tr>
+      <td>1</td>
+      <td><strong>Запах пластика или силикона</strong></td>
+      <td><span class="sev-crit">Массовая</span></td>
+      <td>Все три бренда получают жалобы на химический запах, который иногда не исчезает даже после многократного мытья и стерилизации.</td>
+    </tr>
+<tr>
+      <td>2</td>
+      <td><strong>Непроливайка = проливайка</strong></td>
+      <td><span class="sev-crit">Массовая</span></td>
+      <td>Несмотря на позиционирование как «непроливайки», пользователи каждого товара сталкиваются с протечками через резьбу, клапаны или отверстия для воздуха.</td>
+    </tr>
+<tr>
+      <td>3</td>
+      <td><strong>Вращающиеся ручки</strong></td>
+      <td><span class="sev-high">Частая</span></td>
+      <td>У всех моделей ручки прокручиваются вокруг бутылочки, что мешает ребёнку удобно держать поильник.</td>
+    </tr>
+<tr>
+      <td>4</td>
+      <td><strong>Сложность питья через клапан</strong></td>
+      <td><span class="sev-high">Частая</span></td>
+      <td>Многие родители отмечают, что из-за тугих клапанов детям (и даже взрослым) крайне тяжело высасывать жидкость.</td>
+    </tr>
+<tr>
+      <td>5</td>
+      <td><strong>Трудности промывания трубочки</strong></td>
+      <td><span class="sev-high">Частая</span></td>
+      <td>Тонкие трубочки и мелкие детали клапана сложно промыть, особенно после сока или компота. Образуется плесень и налёт.</td>
+    </tr>
+</tbody>
+</table>
+
+<h3>Уникальные проблемы по товарам</h3>
+<div class="grid3"><div class="card" style="border-top: 3px solid var(--red);">
+    <h4>КАРТОФАН 250 мл</h4>
+    <ul><li>Деформация корпуса при кипячении — вздувается дно, плавятся ручки</li>
+<li>«Эффект вулкана» — вода выплёскивается из трубочки при открытии крышки</li>
+<li>Больше всего жалоб на упаковку: товар без доп. защиты, подозрения на б/у</li></ul>
+  </div>
+<div class="card" style="border-top: 3px solid var(--orange);">
+    <h4>Minitutu 240 мл</h4>
+    <ul><li>Сильное несоответствие внешнего вида — цвет и форма отличаются от карточки товара</li>
+<li>Риск «фонтана» смеси при случайном сжатии мягкой соски</li>
+<li>Разная возрастная маркировка на коробке и в карточке</li></ul>
+  </div>
+<div class="card" style="border-top: 3px solid var(--blue);">
+    <h4>Paomma 300 мл</h4>
+    <ul><li>Критическая хрупкость крышки — ломается при первом же падении</li>
+<li>Острые края и металлические пружины при поломке — опасность для ребёнка</li>
+<li>Крышка упирается в лоб ребёнку при питье</li></ul>
+  </div>
+</div>
+
+<h2 class="h2-red"><span class="icon">&#128230;</span> 6. Проблема упаковки</h2>
+<table>
+  <thead><tr><th>Вариант</th><th>Описание</th><th>Частота</th></tr></thead>
+  <tbody><tr>
+      <td style="background:var(--red-bg);"><strong>Без доп. защиты (КАРТОФАН)</strong></td>
+      <td>Товар в заводской коробке без пакетов и плёнки. Мятые, рваные, вскрытые коробки. Подозрения на б/у.</td>
+      <td>Часто</td>
+    </tr>
+<tr>
+      <td><strong>Двойная упаковка (Paomma)</strong></td>
+      <td>Заводская коробка + транспортировочная. Хорошая защита, но хрупкий пластик всё равно трескается при транспортировке.</td>
+      <td>Средне</td>
+    </tr>
+<tr>
+      <td style="background:var(--green-bg);"><strong>Пупырчатая плёнка (Minitutu)</strong></td>
+      <td>Аккуратная упаковка с пупырчатой плёнкой. Минимум жалоб на повреждения. Лучшая упаковка из трёх.</td>
+      <td>Редко</td>
+    </tr>
+</tbody>
+</table>
+<h3>Сравнение по товарам</h3>
+<table>
+  <thead><tr><th>Товар</th><th>Острота</th><th>Специфика</th></tr></thead>
+  <tbody><tr style="background:var(--red-bg);">
+      <td><strong>КАРТОФАН</strong></td>
+      <td><span class="sev-crit">Хуже всего</span></td>
+      <td>Без доп. упаковки, мятые коробки, подозрения на возврат</td>
+    </tr>
+<tr>
+      <td><strong>Paomma</strong></td>
+      <td><span class="">Средне</span></td>
+      <td>Двойная коробка, но хрупкий пластик трескается при транспортировке</td>
+    </tr>
+<tr>
+      <td><strong>Minitutu</strong></td>
+      <td><span class="">Лучше всех</span></td>
+      <td>Пупырчатая плёнка, целые коробки, минимум жалоб</td>
+    </tr>
+</tbody>
+</table>
+
+<h2 class="h2-green"><span class="icon">&#128161;</span> 7. Рекомендации производителю</h2>
+<table>
+  <thead><tr><th>#</th><th>Рекомендация</th><th>Приоритет</th><th>Эффект</th></tr></thead>
+  <tbody><tr>
+      <td>1</td>
+      <td><strong>КАРТОФАН: Термостойкий пластик</strong></td>
+      <td><span class="sev-crit">&#128308; Критический</span></td>
+      <td>Устранит проблему деформации при стерилизации</td>
+    </tr>
+<tr>
+      <td>2</td>
+      <td><strong>КАРТОФАН: Доработать резьбу и уплотнители</strong></td>
+      <td><span class="sev-crit">&#128308; Критический</span></td>
+      <td>Снизит жалобы на протечки (~30% негатива)</td>
+    </tr>
+<tr>
+      <td>3</td>
+      <td><strong>КАРТОФАН: Заводская упаковка с плёнкой</strong></td>
+      <td><span class="sev-crit">&#128992; Высокий</span></td>
+      <td>Снимет подозрения на б/у, уменьшит негатив</td>
+    </tr>
+<tr>
+      <td>4</td>
+      <td><strong>Minitutu: Актуализировать фото в карточке</strong></td>
+      <td><span class="sev-crit">&#128992; Высокий</span></td>
+      <td>Устранит основную причину негативных отзывов</td>
+    </tr>
+<tr>
+      <td>5</td>
+      <td><strong>Minitutu: Продавать сменные насадки отдельно</strong></td>
+      <td><span class="sev-med">&#128993; Средний</span></td>
+      <td>Увеличит LTV и снизит негатив при износе</td>
+    </tr>
+<tr>
+      <td>6</td>
+      <td><strong>Paomma: Усилить конструкцию крышки</strong></td>
+      <td><span class="sev-crit">&#128308; Критический</span></td>
+      <td>Устранит главную проблему — поломка при первом падении</td>
+    </tr>
+<tr>
+      <td>7</td>
+      <td><strong>Paomma: Убрать металлические пружины</strong></td>
+      <td><span class="sev-crit">&#128308; Критический</span></td>
+      <td>Устранит опасность для ребёнка при поломке</td>
+    </tr>
+<tr>
+      <td>8</td>
+      <td><strong>Все: Фиксация ручек</strong></td>
+      <td><span class="sev-crit">&#128992; Высокий</span></td>
+      <td>Общая проблема категории — первый кто решит получит конкурентное преимущество</td>
+    </tr>
+</tbody>
+</table>
+
+<h2 class="h2-blue"><span class="icon">&#128200;</span> 8. Выводы</h2>
+<div class="grid3"><div class="summary-box summary-green">
+    <h4>Minitutu 240 мл</h4>
+    <p>Лидер по удовлетворённости (97%). Богатая комплектация и универсальность делают его лучшим выбором. Главная проблема — несоответствие фото на сайте.</p>
+  </div>
+<div class="summary-box summary-blue">
+    <h4>Paomma 300 мл</h4>
+    <p>Красивый и функциональный поильник, но хрупкость крышки — критическая проблема. Острые края при поломке могут быть опасны. 81% положительных.</p>
+  </div>
+<div class="summary-box summary-orange">
+    <h4>КАРТОФАН 250 мл</h4>
+    <p>Доступный поильник с хорошей функциональностью, но страдает от проблем с герметичностью и упаковкой. 77% положительных оценок — ниже конкурентов.</p>
+  </div>
+</div>
+<div class="summary-box summary-blue" style="margin-top:24px;">
+  <strong>&#128161; Главный вывод:</strong> Лидер по удовлетворённости — Minitutu (97%), несмотря на малое количество отзывов. Его сильные стороны: богатая комплектация, универсальность и лучшая упаковка. КАРТОФАН (77%) страдает от протечек, тугого клапана и плохой упаковки. Paomma (81%) — красивый и функциональный, но критически хрупкая крышка с острыми краями при поломке. Общие проблемы категории: запах пластика, вращающиеся ручки, протечки и сложность промывания.
+</div>
+
+<div class="footer">
+  Отчёт подготовлен на основе 1,961 отзывов с Ozon.ru &middot; 2026-04-10 &middot; Анализ: Google NotebookLM (Gemini) + Claude
+</div>
+
+</body>
+</html>
